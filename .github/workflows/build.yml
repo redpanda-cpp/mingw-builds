@@ -44,7 +44,7 @@ jobs:
       - name: Rename Windows 7 builds
         shell: msys2 {0}
         run: |
-          if [ ${{ matrix.win32_winnt }} -eq 0x0601 ]; then
+          if [[ ${{ matrix.win32_winnt }} -eq 0x0601 ]]; then
             file=$(ls /c/buildroot/archives/*.7z)
             newfile=${file%.7z}-win7.7z
             mv $file $newfile
