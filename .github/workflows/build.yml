@@ -9,13 +9,12 @@ jobs:
     strategy:
       matrix:
         arch: [x86_64, i686]
-        include:
-          - arch: "x86_64"
-            eh: "seh"
-            win32_winnt: "0x0502"
-          - arch: "i686"
-            eh: "dwarf"
-            win32_winnt: "0x0500"
+        win32_winnt: ['0x0601', '0x0502', '0x0500']
+        exclude:
+        - arch: x86_64
+          win32_winnt: '0x0500'
+        - arch: i686
+          win32_winnt: '0x0502'
 
     steps:
       - uses: actions/checkout@v4
@@ -34,18 +33,27 @@ jobs:
             --mode=gcc-11.5.0 \
             --enable-languages=c,c++ \
             --arch=${{ matrix.arch }} \
-            --exceptions=${{ matrix.eh }} \
+            --exceptions=dwarfseh \
             --threads=posix \
             --rt-version=v9 \
             --with-default-win32-winnt=${{ matrix.win32_winnt }} \
-            --rev=0"
+            --rev=1"
           ./build $common_args --fetch-only
           ./build $common_args --bin-compress
+
+      - name: Rename Windows 7 builds
+        shell: msys2 {0}
+        run: |
+          if [ ${{ matrix.win32_winnt }} -eq 0x0601 ]; then
+            file=$(ls /c/buildroot/archives/*.7z)
+            newfile=${file%.7z}-win7.7z
+            mv $file $newfile
+          fi
 
       - name: Upload
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.arch }}
+          name: ${{ matrix.arch }} ${{ matrix.win32_winnt }}
           path: C:/buildroot/archives/*.7z
 
       - name: Release
